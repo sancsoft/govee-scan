@@ -3,9 +3,22 @@
 #include "esp_bt_main.h"
 #include "esp_log.h"
 #include "nvs_flash.h"
+#include "esp_wifi.h"
+#include "esp_event.h"
+#include "esp_netif.h"
 
 #define GOVEE_MANUF_ID 0xEC88
 #define TAG "GOVEE"
+
+#define WIFI_SSID "sancsoft"
+#define WIFI_PASSWORD "aoxomoxoa"
+
+static void ip_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
+    if (event_id == IP_EVENT_STA_GOT_IP) {
+        ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
+        ESP_LOGI(TAG, "WiFi connected! IP: %s", esp_ip4addr_ntoa(&event->ip_info.ip, NULL, 0));
+    }
+}
 
 static void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param) {
     if (event == ESP_GAP_BLE_SCAN_RESULT_EVT) {
@@ -36,11 +49,34 @@ static void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *par
 void app_main(void) {
     nvs_flash_init();
     
+    esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT);
+    
     esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
     esp_bt_controller_init(&bt_cfg);
     esp_bt_controller_enable(ESP_BT_MODE_BLE);
     esp_bluedroid_init();
     esp_bluedroid_enable();
+    
+    esp_event_loop_create_default();
+    
+    esp_netif_init();
+    esp_netif_create_default_wifi_sta();
+    
+    esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, &ip_event_handler, NULL);
+    
+    wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
+    esp_wifi_init(&cfg);
+    esp_wifi_set_mode(WIFI_MODE_STA);
+    esp_wifi_start();
+    
+    wifi_config_t wifi_config = {
+        .sta = {
+            .ssid = WIFI_SSID,
+            .password = WIFI_PASSWORD,
+        },
+    };
+    esp_wifi_set_config(WIFI_MODE_STA, &wifi_config);
+    esp_wifi_connect();
     
     esp_ble_gap_register_callback(esp_gap_cb);
     
@@ -48,10 +84,10 @@ void app_main(void) {
         .scan_type = BLE_SCAN_TYPE_ACTIVE,
         .own_addr_type = BLE_ADDR_TYPE_PUBLIC,
         .scan_filter_policy = BLE_SCAN_FILTER_ALLOW_ALL,
-        .scan_interval = 0x50,
-        .scan_window = 0x30,
+        .scan_interval = 0x100,
+        .scan_window = 0x50,
         .scan_duplicate = BLE_SCAN_DUPLICATE_DISABLE
     };
     esp_ble_gap_set_scan_params(&ble_scan_params);
-    esp_ble_gap_start_scanning(0);
+    esp_ble_gap_start_scanning(10);
 }
