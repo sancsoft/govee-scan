@@ -12,7 +12,7 @@
 #define TAG "GOVEE"
 
 #define WIFI_SSID "sancsoft"
-#define WIFI_PASSWORD "aoxomoxoa"
+#define WIFI_PASSWORD "password"
 
 static float g_temp = -100.0f;
 static float g_hum = -100.0f;
