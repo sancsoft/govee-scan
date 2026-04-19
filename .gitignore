@@ -1,19 +1,122 @@
-CMakeLists.txt.user
-CMakeCache.txt
-CMakeFiles
-CMakeScripts
-Testing
-Makefile
-cmake_install.cmake
-install_manifest.txt
-compile_commands.json
-CTestTestfile.cmake
-_deps
-CMakeUserPresets.json
+# Gitignore for ESP-IDF v6 projects
 
-# CLion
-#  JetBrains specific template is maintained in a separate JetBrains.gitignore that can
-#  be found at https://github.com/github/gitignore/blob/main/Global/JetBrains.gitignore
-#  and can be added to the global gitignore or merged into this file.  For a more nuclear
-#  option (not recommended) you can uncomment the following to ignore the entire idea folder.
-#cmake-build-*
+# Build directory
+/build/
+
+# Generated configuration files
+/sdkconfig
+/sdkconfig.old
+
+# Component build artifacts
+/components/.idf/
+/components/__pycache__/
+managed_components/
+
+# IDF tools directory
+/.espressif/
+
+# Generated files
+*.bin
+*.elf
+*.map
+*.bin.*  # Bootloader binaries
+*.factory.bin
+*.img
+*.flasher.conf
+*.flasher_args.json
+*.flasher_project.json
+*.hex
+*.list
+*.rom
+*.tab.*  # Symbol table files
+*.pem
+*.der
+
+# Compiler/IDE generated
+*.o
+*.a
+*.out
+*.exe
+*.d
+*.orig
+*.rej
+
+# Logs
+*.log
+logs/
+
+# Python cache
+*.pyc
+*.pyo
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+.env/
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# User-specific files
+*.user
+*.sln.docstates
+*.workspace
+*.suo
+*.user
+*.uvproj
+*.uvopt
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+CMakeScripts/
+CMakeLists.txt.user
+cmake_install.cmake
+CTestTestfile.cmake
+compile_commands.json
+
+# Language server
+.ccls-cache/
+.clangd/
+
+# Coverage reports
+coverage/
+*.gcov
+*.lcov
+*.info
+
+# Documentation
+/doc/_build/
+
+# Testing
+/.nyc_output/
+/coverage/
+/htmlcov/
+.tox/
+
+# Misc
+*.cache
+*.tmp
+*.temp
+/tmp/
+/temp/
