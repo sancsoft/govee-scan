@@ -20,6 +20,8 @@ static char g_mac[18] = "Unknown";
 
 static httpd_handle_t g_httpd = NULL;
 
+static int count = 0;
+
 static void ip_event_handler(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data) {
     if (event_id == IP_EVENT_STA_GOT_IP) {
         ip_event_got_ip_t *event = (ip_event_got_ip_t *)event_data;
@@ -32,7 +34,6 @@ static void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *par
         if (param->scan_rst.search_evt == ESP_GAP_SEARCH_INQ_RES_EVT) {
             
             uint8_t *adv_data = param->scan_rst.ble_adv;
-            int adv_data_len = param->scan_rst.adv_data_len;
             uint8_t *mfg_data = NULL;
             int mfg_data_len = 0;
 
@@ -44,13 +45,13 @@ static void esp_gap_cb(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *par
                     uint32_t val = (mfg_data[3] << 16) | (mfg_data[4] << 8) | mfg_data[5];
                     g_temp = (float)val / 10000.0;
                     g_hum = (float)(val % 1000) / 10.0;
-                    
+                    count++;
                     snprintf(g_mac, sizeof(g_mac), "%02x:%02x:%02x:%02x:%02x:%02x",
                              param->scan_rst.bda[5], param->scan_rst.bda[4], param->scan_rst.bda[3],
                              param->scan_rst.bda[2], param->scan_rst.bda[1], param->scan_rst.bda[0]);
                     
-                    ESP_LOGI(TAG, "Device: %s | Temp: %.2f°C | Hum: %.1f%% | Batt: %d%%", 
-                             g_mac, g_temp, g_hum, mfg_data[6]);
+                    ESP_LOGI(TAG, "Device: %s | Temp: %.2f°C | Hum: %.1f%% | Batt: %d%% | Count: %d", 
+                             g_mac, g_temp, g_hum, mfg_data[6], count);
                 }
             }
         }
@@ -73,6 +74,7 @@ static esp_err_t http_handler(httpd_req_t *req) {
         .hum { font-size: 3rem; color: #81d4fa; }
         .label { color: #aaa; font-size: 1.2rem; }
         .mac { color: #666; font-family: monospace; font-size: 0.9rem; margin-top: 20px; }
+        .count { color: #666; font-family: monospace; font-size: 0.9rem; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -83,11 +85,13 @@ static esp_err_t http_handler(httpd_req_t *req) {
         <div class="label">Temperature</div>
         <div class="label">Humidity</div>
         <div class="mac" id="mac">Waiting...</div>
+        <div class="count" id="count">-</div>
     </div>
     <script>
         setInterval(() => fetch('/api/sensor').then(r=>r.json()).then(d=>{ 
             if(d.temp>-99){ document.getElementById('t').textContent=d.temp.toFixed(1); document.getElementById('h').textContent=d.hum.toFixed(1); }
             if(d.mac) document.getElementById('mac').textContent='MAC: '+d.mac;
+            if(d.mac) document.getElementById('count').textContent='Count: '+d.cnt;
         }), 2000);
     </script>
 </body>
@@ -102,7 +106,7 @@ static esp_err_t json_handler(httpd_req_t *req) {
     httpd_resp_set_type(req, "application/json");
     
     char json[128];
-    snprintf(json, sizeof(json), "{\"temp\":%.1f,\"hum\":%.1f,\"mac\":\"%s\"}", g_temp, g_hum, g_mac);
+    snprintf(json, sizeof(json), "{\"temp\":%.1f,\"hum\":%.1f,\"mac\":\"%s\",\"cnt\":%d}", g_temp, g_hum, g_mac, count);
     
     httpd_resp_send(req, json, strlen(json));
     return ESP_OK;
@@ -165,7 +169,7 @@ void app_main(void) {
         .scan_duplicate = BLE_SCAN_DUPLICATE_DISABLE
     };
     esp_ble_gap_set_scan_params(&ble_scan_params);
-    esp_ble_gap_start_scanning(10);
+    esp_ble_gap_start_scanning(0);
     
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     httpd_start(&g_httpd, &config);
